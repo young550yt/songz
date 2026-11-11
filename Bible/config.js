@@ -1,0 +1,2 @@
+window.APP_HOST="192.168.18.46";
+window.APP_PORT=8395;

@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12100c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2312100c'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23e0b25c'%3E%E2%9C%90%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Daily Verse</title>
+<style>
+  :root{
+    --bg:#12100c; --card:#1c1913; --card2:#241f17; --line:#332c20;
+    --fg:#efe9dc; --mut:#9c917c; --gold:#e0b25c; --gold2:#f2cf8b;
+    --done:#7fbf7f; --hot:#d9736b; --accent:#e0b25c;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.55 Georgia,"Times New Roman",serif;
+    padding-bottom:120px; overscroll-behavior-y:none}
+  button{font:inherit; border:1px solid var(--line); background:var(--card);
+    color:var(--fg); border-radius:12px; padding:0 15px; min-height:44px; cursor:pointer}
+  button:hover{border-color:var(--mut); background:var(--card2)}
+  button.on{border-color:var(--gold); color:var(--gold); background:rgba(224,178,92,.1)}
+  button.pri{background:var(--gold); color:#241a06; border-color:var(--gold); font-weight:700}
+  button.pri:hover{background:var(--gold2)}
+  textarea{font:15px/1.5 inherit; background:var(--card2); color:var(--fg);
+    border:1px solid var(--line); border-radius:11px; padding:10px 12px;
+    width:100%; min-height:58px; outline:none; resize:vertical; font-family:inherit}
+  textarea:focus{border-color:var(--gold)}
+  input[type=text],input[type=search],input[type=number]{font:15px inherit;
+    background:var(--card2); color:var(--fg); border:1px solid var(--line);
+    border-radius:11px; padding:10px 12px; outline:none; width:100%}
+  input:focus{border-color:var(--gold)}
+  input[type=checkbox]{width:26px; height:26px; accent-color:var(--done); cursor:pointer}
+  input[type=range]{-webkit-appearance:none; appearance:none; height:26px; background:transparent}
+  input[type=range]::-webkit-slider-runnable-track{height:5px; background:var(--card2);
+    border:1px solid var(--line); border-radius:4px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:19px; height:19px;
+    margin-top:-8px; border-radius:50%; background:var(--gold); border:none}
+
+  header{position:sticky; top:0; z-index:10; background:rgba(18,16,12,.97);
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--line);
+    padding:11px 14px 0}
+  .top{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  h1{font-size:19px; margin:0; font-weight:700; letter-spacing:.3px; flex:1; min-width:0}
+  h1 em{color:var(--gold); font-style:normal}
+  .date{color:var(--mut); font-size:13.5px; width:100%; margin-top:1px}
+  .stat{color:var(--gold); font-size:13px; white-space:nowrap}
+  nav{display:flex; gap:6px; margin-top:9px; overflow-x:auto; scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{border:none; background:transparent; color:var(--mut); min-height:40px;
+    border-radius:0; border-bottom:2px solid transparent; font-size:15px; padding:0 12px}
+  nav button.on{color:var(--gold); border-bottom-color:var(--gold); background:transparent}
+  nav button:hover{background:transparent}
+
+  main{padding:14px; max-width:760px; margin:0 auto}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:15px;
+    padding:15px 16px; margin-bottom:13px}
+  .vref{color:var(--gold); font-weight:700; font-size:15px; letter-spacing:.2px;
+    display:flex; align-items:center; gap:11px; flex-wrap:wrap}
+  .vref .chk{margin-left:auto}
+  .vtext{margin:9px 0 0; font-size:17px; line-height:1.6}
+  .vnote{margin-top:12px}
+  .vnote .lbl{color:var(--mut); font-size:12.5px; margin-bottom:5px; display:block}
+  .card.done{border-color:rgba(127,191,127,.5)}
+  .card.done .vtext{opacity:.85}
+  .saved{color:var(--done); font-size:12px; margin-left:auto; opacity:0; transition:opacity .3s}
+  .saved.show{opacity:1}
+
+  .prog{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+  .pbar{flex:1; height:9px; background:var(--card2); border:1px solid var(--line);
+    border-radius:5px; overflow:hidden}
+  .pbar i{display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2));
+    width:0; transition:width .4s}
+  .ptxt{color:var(--mut); font-size:13.5px; white-space:nowrap; font-variant-numeric:tabular-nums}
+
+  .hday{background:var(--card); border:1px solid var(--line); border-radius:15px;
+    padding:13px 15px; margin-bottom:11px}
+  .hday h3{margin:0 0 8px; font-size:14.5px; color:var(--gold); display:flex;
+    align-items:center; gap:9px; font-weight:700}
+  .hday h3 .badge{margin-left:auto; font-size:12px; color:var(--mut); font-weight:400}
+  .hverse{display:flex; gap:9px; align-items:baseline; padding:5px 0;
+    border-top:1px solid rgba(51,44,32,.6); font-size:14.5px}
+  .hverse:first-of-type{border-top:none}
+  .hverse .mark{flex:none; width:20px}
+  .hverse .ref{color:var(--gold); font-weight:700; flex:none}
+  .hverse .txt{color:var(--fg); opacity:.9; flex:1; min-width:0}
+  .hverse .note{color:var(--mut); font-size:13px; font-style:italic; display:block; margin-top:2px}
+  .hverse.ok .mark{color:var(--done)}
+  .hverse.no .mark{color:var(--mut); opacity:.5}
+
+  .empty{color:var(--mut); text-align:center; padding:40px 16px; font-size:14.5px}
+
+  .field{margin-bottom:16px}
+  .field .lbl{display:block; color:var(--gold); font-size:14px; margin-bottom:7px; font-weight:700}
+  .field .hint{color:var(--mut); font-size:12.5px; margin-top:6px; line-height:1.45}
+  .segs{display:flex; gap:7px}
+  .segs button{flex:1; min-height:48px; font-size:17px}
+  .books{display:flex; flex-wrap:wrap; gap:7px; max-height:230px; overflow-y:auto;
+    padding:2px; scrollbar-width:thin}
+  .books button{min-height:38px; font-size:14px; padding:0 12px; border-radius:10px}
+  .quick{display:flex; gap:7px; margin-bottom:9px; flex-wrap:wrap}
+  .quick button{min-height:36px; font-size:13px}
+
+  .pill{display:inline-flex; align-items:center; gap:6px; font-size:12px;
+    border:1px solid var(--line); border-radius:20px; padding:4px 11px; color:var(--mut);
+    background:var(--card2); white-space:nowrap}
+  .pill b{font-weight:700}
+  .pill.live{color:var(--done); border-color:rgba(127,191,127,.45)}
+  .pill.wait{color:var(--gold); border-color:rgba(224,178,92,.45)}
+  .pill.off{color:var(--hot); border-color:rgba(217,115,107,.45)}
+  .dot{width:8px; height:8px; border-radius:50%; background:currentColor; display:inline-block}
+  .dot.pulse{animation:pulse 1.4s infinite ease-in-out}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+  #syncbox{margin-top:9px; padding:9px 11px; background:var(--card2);
+    border:1px solid var(--line); border-radius:11px; font-size:13px; color:var(--mut);
+    display:none; line-height:1.5}
+  #syncbox.on{display:block}
+  #syncbox button{min-height:36px; font-size:13px; margin-top:8px}
+
+  footer{color:var(--mut); font-size:11.5px; text-align:center; padding:22px 14px 8px;
+    line-height:1.6; font-family:system-ui,-apple-system,sans-serif}
+  footer b{color:var(--mut)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="top">
+    <h1>Daily <em>Verse</em></h1>
+    <span class="stat" id="streak"></span>
+    <span class="pill" id="pill" title="Sync status"><span class="dot"></span><b>...</b></span>
+  </div>
+  <div class="date" id="dateline"></div>
+  <nav>
+    <button id="tabToday" class="on" type="button">Today</button>
+    <button id="tabHistory" type="button">History</button>
+    <button id="tabSettings" type="button">Settings</button>
+  </nav>
+  <div id="syncbox"></div>
+</header>
+
+<main>
+  <!-- ================= TODAY ================= -->
+  <section id="viewToday">
+    <div class="prog">
+      <div class="pbar"><i id="pfill"></i></div>
+      <span class="ptxt" id="ptxt"></span>
+    </div>
+    <div id="verses"></div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section id="viewHistory" hidden>
+    <div class="prog">
+      <div class="pbar"><i id="hfill"></i></div>
+      <span class="ptxt" id="htxt"></span>
+    </div>
+    <div id="histlist"></div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section id="viewSettings" hidden>
+    <div class="card">
+      <div class="field">
+        <span class="lbl">How many verses a day?</span>
+        <div class="segs" id="perday">
+          <button type="button" data-n="1">1</button>
+          <button type="button" data-n="2">2</button>
+          <button type="button" data-n="3">3</button>
+        </div>
+        <div class="hint">Each verse is a task for the day. Tick it off and say how
+          you got it done - that becomes your permanent record.</div>
+      </div>
+
+      <div class="field">
+        <span class="lbl">Books to draw from</span>
+        <div class="quick">
+          <button type="button" id="qOT">Old Testament</button>
+          <button type="button" id="qNT">New Testament</button>
+          <button type="button" id="qWisdom">Wisdom</button>
+          <button type="button" id="qGospels">Gospels</button>
+          <button type="button" id="qAll">All</button>
+          <button type="button" id="qNone">None</button>
+        </div>
+        <input type="search" id="booksearch" placeholder="Search books..." autocomplete="off">
+        <div class="books" id="booklist"></div>
+        <div class="hint" id="bookhint"></div>
+      </div>
+
+      <button class="pri" id="savesettings" type="button">Save settings</button>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <span class="lbl">Sync</span>
+        <div class="hint" id="syncdesc"></div>
+      </div>
+      <div class="field">
+        <span class="lbl">Laptop address (for the phone)</span>
+        <input type="text" id="syncurl" placeholder="http://192.168.18.46:8395"
+               autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="hint">Leave as is on the laptop. On the phone, this is the
+          address the app posts your ticked verses to - it is printed in the
+          laptop's terminal when the server starts. Changes are kept on this
+          device only.</div>
+      </div>
+      <button id="syncnow" type="button">Sync now</button>
+      <button id="resettoday" type="button" style="margin-left:7px">Reset today's verses</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Verse text: World English Bible, public domain.<br>
+  Record lives in <b>data.js</b> next to this file and syncs with your other devices.
+</footer>
+
+<!-- whole Bible, ~3.5 MB, generated by make_bible_data.py -->
+<script src="bible_data.js"></script>
+<!-- your record: settings + every day you have logged -->
+<script src="data.js"></script>
+<!-- laptop address; served fresh over http, read off disk on file:// -->
+<script src="config.js"></script>
+<script>
+/* =====================================================================
+   Daily Verse - verses as daily tasks, with a permanent record.
+   Works two ways, same data:
+     served  (http://localhost:8395)  - laptop. Every save writes data.js
+                                       straight to disk.
+     local   (file:// on the phone)  - reads the synced data.js via script
+                                       tag (the only read file:// allows),
+                                       queues changes in localStorage and
+                                       posts them to the laptop when it can
+                                       reach it.
+   Both modes merge per-day per-verse with timestamps, so the two devices
+   never clobber each other.
+   ===================================================================== */
+var $ = function(id){ return document.getElementById(id); };
+
+var SERVED = location.protocol==="http:" || location.protocol==="https:";
+var DB = window.VERSE_DB || [];                 /* [[bookName, [[verses...]]]] */
+var REC = window.RECORD || {v:1, settings:{books:["Psalms","Proverbs"], perDay:2}, days:{}};
+if(!REC.settings) REC.settings={books:["Psalms","Proverbs"], perDay:2};
+if(!REC.days) REC.days={};
+/* false when data.js did not load, or loaded as something that is not a
+   record (opened with no network and no saved copy, or a corrupt file).
+   In that state the app must show nothing rather than draw verses from
+   default settings and freeze them into the record. */
+var REC_OK = !!(window.RECORD && typeof window.RECORD==="object" &&
+                !Array.isArray(window.RECORD));
+
+/* local queue of changes made while the server was unreachable */
+var QUEUE = [];
+try{ QUEUE = JSON.parse(localStorage.getItem("bv-queue")||"[]")||[]; }catch(e){}
+
+function lsGet(k){ try{ return localStorage.getItem(k)||""; }catch(e){ return ""; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,
+  function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+var BOOKS = DB.map(function(b, i){ return {name:b[0], chapters:b[1], i:i}; });
+var BOOK_INDEX = {}; BOOKS.forEach(function(b){ BOOK_INDEX[b.name]=b; });
+
+/* =====================================================================
+   The verse of the day: seeded by date + settings, so the laptop and the
+   phone independently pick the SAME verses. Once a day has been logged
+   it is frozen, so changing settings cannot rewrite history.
+   ===================================================================== */
+function todayKey(d){
+  d = d || new Date();
+  var m=d.getMonth()+1, day=d.getDate();
+  return d.getFullYear()+"-"+(m<10?"0":"")+m+"-"+(day<10?"0":"")+day;
+}
+function yesterdayKey(){
+  var d=new Date(); d.setDate(d.getDate()-1); return todayKey(d);
+}
+function hash32(str){
+  var h=2166136261>>>0;
+  for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+  return h>>>0;
+}
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    var t=Math.imul(a^a>>>15, 1|a);
+    t=t+Math.imul(t^t>>>7, 61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+/* A verse is worth a task if it says something - skip fragments like
+   "Selah." or a bare name, which cannot be acted on. */
+function isSubstantial(text){
+  return text && text.replace(/[^A-Za-z']/g," ").split(/\s+/).length>=6;
+}
+function pickVerses(key, books, n){
+  var pool=[];
+  books.forEach(function(name){
+    var b=BOOK_INDEX[name]; if(!b) return;
+    b.chapters.forEach(function(ch, ci){
+      ch.forEach(function(text, vi){
+        if(isSubstantial(text)) pool.push([b.name, ci+1, vi+1]);
+      });
+    });
+  });
+  if(!pool.length) return [];
+  var rnd=mulberry32(hash32(key+"|"+books.slice().sort().join(",")+"|"+n));
+  /* Fisher-Yates on a copy, take the front */
+  var idx=pool.map(function(_,i){ return i; });
+  for(var i=idx.length-1;i>0;i--){ var j=Math.floor(rnd()*(i+1)); var t=idx[i]; idx[i]=idx[j]; idx[j]=t; }
+  var picked=[], usedCh={};
+  /* first pass prefers distinct chapters so 3 verses are not all Psalm 23 */
+  for(var k=0;k<idx.length && picked.length<n;k++){
+    var v=pool[idx[k]], ck=v[0]+"#"+v[1];
+    if(usedCh[ck]) continue;
+    usedCh[ck]=1; picked.push(v);
+  }
+  for(var k2=0;k2<idx.length && picked.length<n;k2++){
+    var v2=pool[idx[k2]];
+    if(picked.indexOf(v2)<0) picked.push(v2);
+  }
+  return picked;
+}
+function textOf(ref){
+  var b=BOOK_INDEX[ref[0]]; if(!b) return "";
+  var ch=b.chapters[ref[1]-1]; if(!ch) return "";
+  return ch[ref[2]-1]||"";
+}
+function refLabel(ref){ return ref[0]+" "+ref[1]+":"+ref[2]; }
+
+/* The record keeps plain strings ("Psalms 23:1") rather than nested arrays,
+   so a file edited by hand stays readable. */
+function parseRef(s){
+  var m=/^(.*)\s+(\d+):(\d+)$/.exec(String(s||""));
+  if(!m) return null;
+  return [m[1], +m[2], +m[3]];
+}
+
+/* =====================================================================
+   Today
+   ===================================================================== */
+var today = todayKey();
+
+function syncToday(){
+  /* This page can stay open past midnight. Re-anchor "today" so check-ins
+     land on the date they actually happened on, and a fresh pick is drawn
+     for the new day - otherwise everything would keep filing under the
+     day the page was opened on. */
+  var k=todayKey();
+  if(k===today) return false;
+  today=k;
+  return true;
+}
+
+function ensureToday(){
+  syncToday();
+  var day = REC.days[today];
+  if(day && day.refs && day.refs.length) return day;
+  if(!REC_OK) return {refs:[], verses:[]};      /* no record: render nothing, save nothing */
+  var s=REC.settings;
+  var refs = pickVerses(today, s.books||[], s.perDay||2).map(refLabel);
+  day = {refs:refs, verses:refs.map(function(){ return {}; }), frozenAt:Date.now(), updatedAt:Date.now()};
+  REC.days[today]=day;
+  save();                                    /* freeze it on whichever device sees it first */
+  return day;
+}
+function verseState(i){
+  var day=REC.days[today]; if(!day) return {};
+  return (day.verses&&day.verses[i])||{};
+}
+function setVerseState(i, patch){
+  var day=ensureToday();
+  if(!day.verses) day.verses=[];
+  if(!day.verses[i]) day.verses[i]={};
+  var v=day.verses[i];
+  for(var k in patch) v[k]=patch[k];
+  day.updatedAt=Date.now();
+  save();
+}
+
+function renderToday(){
+  var day=ensureToday();
+  var refs=day.refs||[];
+  var h="", done=0;
+  refs.forEach(function(r, i){
+    var st=verseState(i), isDone=!!st.done;
+    if(isDone) done++;
+    h+='<div class="card'+(isDone?" done":"")+'">'+
+       '<div class="vref">'+esc(r)+
+         '<span class="saved" id="sv'+i+'">saved</span>'+
+         '<input type="checkbox" class="chk" data-i="'+i+'"'+(isDone?" checked":"")+
+           ' aria-label="Mark done"></div>'+
+       '<p class="vtext">'+esc(textOf(parseRef(r)||[])||"(verse text not available)")+'</p>'+
+       '<div class="vnote"><span class="lbl">How did you get it done?</span>'+
+         '<textarea data-note="'+i+'" placeholder="e.g. read it with my coffee, then prayed about the part about...">'+
+         esc(st.note||"")+'</textarea></div>'+
+       '</div>';
+  });
+  $("verses").innerHTML = h || (REC_OK
+    ? '<div class="empty">No verses - open Settings and choose at least one book.</div>'
+    : '<div class="empty">Your record could not be loaded - no connection and no saved copy yet. It will appear as soon as the server is reachable.</div>');
+  $("ptxt").textContent = refs.length? (done+" of "+refs.length+" done") : "";
+  $("pfill").style.width = refs.length? (done/refs.length*100)+"%" : "0%";
+  paintStreak();
+}
+$("verses").addEventListener("change", function(e){
+  var cb=e.target.closest("input[type=checkbox]"); if(!cb) return;
+  var i=+cb.dataset.i;
+  setVerseState(i, {done:cb.checked, doneAt:Date.now()});
+  renderToday();
+  flash(i);
+});
+var noteTimers={};
+$("verses").addEventListener("input", function(e){
+  var ta=e.target.closest("textarea[data-note]"); if(!ta) return;
+  var i=+ta.dataset.note;
+  clearTimeout(noteTimers[i]);
+  noteTimers[i]=setTimeout(function(){          /* type first, save after a pause */
+    setVerseState(i, {note:ta.value, noteAt:Date.now()});
+    flash(i);
+  }, 700);
+});
+function flash(i){
+  var el=$("sv"+i); if(!el) return;
+  el.classList.add("show");
+  clearTimeout(el._t); el._t=setTimeout(function(){ el.classList.remove("show"); }, 1400);
+}
+
+/* =====================================================================
+   History + streak
+   ===================================================================== */
+function dayStats(key){
+  var day=REC.days[key]; if(!day||!day.refs||!day.refs.length) return null;
+  var done=0;
+  day.verses=day.verses||[];
+  day.refs.forEach(function(_, i){ if(day.verses[i]&&day.verses[i].done) done++; });
+  return {refs:day.refs, verses:day.verses, done:done, total:day.refs.length,
+          complete: done===day.refs.length};
+}
+function paintStreak(){
+  var n=0, k=today;
+  /* today only counts toward the streak once fully done; otherwise start
+     from yesterday so an unfinished today does not wipe the number */
+  var t=dayStats(today);
+  if(!(t&&t.complete)) k=yesterdayKey();
+  for(;;){
+    var s=dayStats(k);
+    if(!s||!s.complete) break;
+    n++;
+    var d=new Date(k+"T00:00:00"); d.setDate(d.getDate()-1); k=todayKey(d);
+  }
+  $("streak").textContent = n>0 ? "\ud83d\udd25 "+n+" day"+(n===1?"":"s") : "";
+}
+function renderHistory(){
+  var keys=Object.keys(REC.days).sort().reverse();
+  var h="", logged=0, complete=0;
+  keys.forEach(function(k){
+    var s=dayStats(k); if(!s) return;
+    logged++; if(s.complete) complete++;
+    var d=new Date(k+"T00:00:00");
+    var nice=d.toLocaleDateString(undefined, {weekday:"long", month:"short", day:"numeric"});
+    if(k===today) nice="Today - "+nice;
+    h+='<div class="hday"><h3>'+esc(nice)+
+       '<span class="badge">'+s.done+"/"+s.total+'</span></h3>';
+    s.refs.forEach(function(r, i){
+      var st=(s.verses&&s.verses[i])||{}, ok=!!st.done;
+      h+='<div class="hverse '+(ok?"ok":"no")+'">'+
+         '<span class="mark">'+(ok?"\u2713":"&#8226;")+'</span>'+
+         '<span class="ref">'+esc(r)+'</span>'+
+         '<span class="txt">'+esc((textOf(parseRef(r))||"").slice(0,120))+
+           ((textOf(parseRef(r))||"").length>120?"...":"")+
+           (st.note?'<span class="note">'+esc(st.note)+'</span>':"")+
+         '</span></div>';
+    });
+    h+='</div>';
+  });
+  $("histlist").innerHTML = h || '<div class="empty">Nothing logged yet. Finish today\u2019s verses and it will show up here.</div>';
+  $("htxt").textContent = logged? (complete+" of "+logged+" days complete") : "";
+  $("hfill").style.width = logged? (complete/logged*100)+"%" : "0%";
+}
+
+/* =====================================================================
+   Settings
+   ===================================================================== */
+var OT = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
+  "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah",
+  "Esther","Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah",
+  "Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum",
+  "Habakkuk","Zephaniah","Haggai","Zechariah","Malachi"];
+var NT = ["Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians",
+  "Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
+  "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John",
+  "2 John","3 John","Jude","Revelation"];
+var WISDOM = ["Psalms","Proverbs","Ecclesiastes","Song of Solomon","Job","James"];
+var GOSPELS = ["Matthew","Mark","Luke","John"];
+
+var pickBooks = (REC.settings.books||[]).slice();
+var pickPerDay = REC.settings.perDay||2;
+
+function renderBookList(){
+  var q=($("booksearch").value||"").trim().toLowerCase();
+  var h="";
+  BOOKS.forEach(function(b){
+    if(q && b.name.toLowerCase().indexOf(q)<0) return;
+    var on = pickBooks.indexOf(b.name)>=0;
+    h+='<button type="button" data-b="'+esc(b.name)+'" class="'+(on?"on":"")+'">'+esc(b.name)+'</button>';
+  });
+  $("booklist").innerHTML = h || '<div class="empty" style="padding:16px">No book matches.</div>';
+  $("bookhint").textContent = pickBooks.length
+    ? pickBooks.length+" book"+(pickBooks.length===1?"":"s")+" selected - verses are drawn at random from all of them."
+    : "Nothing selected - the app will have nothing to give you.";
+}
+$("booklist").addEventListener("click", function(e){
+  var b=e.target.closest("button[data-b]"); if(!b) return;
+  var name=b.dataset.b, at=pickBooks.indexOf(name);
+  if(at>=0) pickBooks.splice(at,1); else pickBooks.push(name);
+  renderBookList();
+});
+$("booksearch").addEventListener("input", renderBookList);
+function selectOnly(list){
+  pickBooks = list.filter(function(n){ return !!BOOK_INDEX[n]; });
+  renderBookList();
+}
+$("qOT").addEventListener("click", function(){ selectOnly(OT); });
+$("qNT").addEventListener("click", function(){ selectOnly(NT); });
+$("qWisdom").addEventListener("click", function(){ selectOnly(WISDOM); });
+$("qGospels").addEventListener("click", function(){ selectOnly(GOSPELS); });
+$("qAll").addEventListener("click", function(){ selectOnly(BOOKS.map(function(b){ return b.name; })); });
+$("qNone").addEventListener("click", function(){ selectOnly([]); });
+
+function paintPerDay(){
+  [].forEach.call($("perday").children, function(b){
+    b.classList.toggle("on", +b.dataset.n===pickPerDay);
+  });
+}
+$("perday").addEventListener("click", function(e){
+  var b=e.target.closest("button[data-n]"); if(!b) return;
+  pickPerDay=+b.dataset.n; paintPerDay();
+});
+$("savesettings").addEventListener("click", function(){
+  if(!pickBooks.length){ alert("Pick at least one book first."); return; }
+  REC.settings={books:pickBooks.slice(), perDay:pickPerDay, updatedAt:Date.now()};
+  /* settings changed: drop today's freeze so tomorrow's pick uses them.
+     Today keeps its verses unless it has none yet - you cannot lose work. */
+  syncToday();
+  var day=REC.days[today];
+  if(!(day && day.refs && day.refs.length && (day.verses||[]).some(function(v){ return v&&(v.done||v.note); }))){
+    delete REC.days[today];
+  }
+  save();
+  renderToday(); renderHistory();
+  toast("Settings saved.");
+});
+
+/* =====================================================================
+   Sync: save() writes through, queueing when the server is unreachable
+   ===================================================================== */
+function syncUrl(){
+  /* A served page is already talking to the server: post back to this
+     exact origin, whatever scheme it uses. The address box only matters
+     when running off the file. */
+  if(SERVED) return location.origin;
+  var u = lsGet("bv-url");
+  if(u) return u.replace(/\/+$/,"");
+  return "http://"+(window.APP_HOST||"127.0.0.1")+":"+ (window.APP_PORT||8395);
+}
+function save(){
+  if(SERVED){
+    post("/api/record", REC).then(function(){ setPill("live"); })
+      .catch(function(){ queueSave(); });   /* server unreachable (away from home) */
+  }else{
+    queueSave();
+  }
+}
+function queueSave(){                       /* keep it here, send when the server answers */
+  enqueue(REC);
+  setPill(QUEUE.length?"wait":"live");
+  flushSoon();
+  paintSyncBox();
+}
+function enqueue(rec){
+  /* keep only what changed: the current settings and today */
+  var patch={settings:rec.settings, days:{}};
+  var d=rec.days[today]; if(d) patch.days[today]=d;
+  QUEUE.push(patch);
+  if(QUEUE.length>40) QUEUE=QUEUE.slice(-40);
+  lsSet("bv-queue", JSON.stringify(QUEUE));
+}
+var flushT=null, flushing=false;
+function flushSoon(){
+  clearTimeout(flushT);
+  flushT=setTimeout(flush, 1500);
+}
+function flush(){
+  if(!QUEUE.length){ setPill("live"); return Promise.resolve(); }
+  if(flushing) return Promise.resolve();     /* one attempt at a time */
+  flushing=true;
+  var payload={settings:REC.settings, days:{}};
+  QUEUE.forEach(function(p){
+    if(p.settings) payload.settings=p.settings;
+    for(var k in (p.days||{})) payload.days[k]=p.days[k];
+  });
+  return post(syncUrl()+"/api/record", payload).then(function(){
+    flushing=false;
+    QUEUE=[]; lsSet("bv-queue","[]"); setPill("live"); paintSyncBox();
+  }).catch(function(){
+    flushing=false;
+    setPill(QUEUE.length?"off":"live");
+  });
+}
+function post(url, body){
+  return fetch(url, {method:"POST", headers:{"Content-Type":"application/json"},
+                     body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) throw new Error("http "+r.status);
+    return r;
+  });
+}
+function setPill(mode){
+  var p=$("pill");
+  p.className="pill "+(mode==="live"?"live":mode==="wait"?"wait":"off");
+  p.innerHTML='<span class="dot'+(mode==="off"?" pulse":"")+'"></span><b>'+
+    (mode==="live"?"synced":mode==="wait"?"queued":"offline")+"</b>";
+}
+function paintSyncBox(){
+  var box=$("syncbox");
+  if(!QUEUE.length){ box.classList.remove("on"); box.innerHTML=""; return; }
+  box.classList.add("on");
+  box.innerHTML="<b>"+QUEUE.length+" change"+(QUEUE.length===1?"":"s")+
+    " waiting to sync.</b> They are safe on this device and will be sent to "+
+    "the laptop as soon as it is reachable. "+
+    "<button type='button' id='flushnow'>Try now</button>";
+  $("flushnow").addEventListener("click", function(){ flush(); });
+}
+$("syncnow").addEventListener("click", function(){
+  flush().then(function(){ toast(QUEUE.length?"Still offline - will keep retrying.":"Synced."); });
+});
+/* Show the address actually in use: the saved override if there is one,
+   otherwise the config.js default. Never show an empty box - its placeholder
+   used to look like a real (wrong) address. */
+$("syncurl").value = syncUrl();
+if(SERVED) $("syncurl").readOnly = true;      /* served pages always post to their own origin */
+$("syncurl").addEventListener("change", function(){
+  var v=this.value.trim().replace(/\/+$/,"");
+  if(v) lsSet("bv-url", v); else try{ localStorage.removeItem("bv-url"); }catch(e){}
+  toast("Sync address saved on this device.");
+});
+$("resettoday").addEventListener("click", function(){
+  syncToday();
+  var day=REC.days[today];
+  if(day && (day.verses||[]).some(function(v){ return v&&(v.done||v.note); })){
+    if(!confirm("Clear today's tick-offs and notes? The verses themselves stay.")) return;
+    day.verses=(day.refs||[]).map(function(){ return {}; });
+    day.updatedAt=Date.now(); save(); renderToday();
+    toast("Today's ticks and notes cleared - the verses stay.");
+  }else{
+    delete REC.days[today]; save(); renderToday();
+    toast("New verses drawn for today.");
+  }
+});
+
+/* =====================================================================
+   Tabs, toast, boot
+   ===================================================================== */
+var toastT=null;
+function toast(msg){
+  var el=$("syncbox");
+  el.classList.add("on");
+  el.innerHTML=esc(msg);
+  clearTimeout(toastT);
+  toastT=setTimeout(function(){ el.classList.remove("on"); paintSyncBox(); }, 2600);
+}
+function showTab(name){
+  ["Today","History","Settings"].forEach(function(n){
+    $("view"+n).hidden = (n!==name);
+    $("tab"+n).classList.toggle("on", n===name);
+  });
+  if(name==="History") renderHistory();
+  if(name==="Settings"){ paintPerDay(); renderBookList();
+    $("syncdesc").textContent = SERVED
+      ? "This device talks to the server directly - every save syncs at once. "+
+        "Away from the laptop, changes queue here and send themselves the "+
+        "moment you are back in reach."
+      : "This device is running off the file. Changes queue here and are sent "+
+        "to the laptop when it is reachable.";
+  }
+}
+$("tabToday").addEventListener("click", function(){ showTab("Today"); });
+$("tabHistory").addEventListener("click", function(){ showTab("History"); });
+$("tabSettings").addEventListener("click", function(){ showTab("Settings"); });
+
+(function boot(){
+  var d=new Date();
+  $("dateline").textContent = d.toLocaleDateString(undefined,
+    {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+  setPill(QUEUE.length?"wait":"live");
+  renderToday();
+  paintSyncBox();
+  if(QUEUE.length) flush();                  /* backlog from an offline session */
+  setInterval(function(){ if(QUEUE.length) flush(); }, 45000);
+  window.addEventListener("online", function(){ if(QUEUE.length) flush(); });
+  document.addEventListener("visibilitychange", function(){
+    if(document.hidden) return;
+    if(syncToday()) renderToday();           /* crossed midnight while away */
+    if(QUEUE.length) flush();
+  });
+  /* Cache the app so it still opens when the laptop is unreachable
+     (sw.js). Needs a secure context - on a plain http://IP address that
+     means the Chrome flag; registration failure is harmless. */
+  if(SERVED && "serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+    /* pick up new versions promptly: re-check when the network returns or
+       the tab comes back, and reload once when a new worker takes over so
+       an update is never stuck waiting behind an open tab */
+    function swUpdate(){
+      navigator.serviceWorker.getRegistration().then(function(r){
+        if(r) r.update();
+      });
+    }
+    window.addEventListener("online", swUpdate);
+    document.addEventListener("visibilitychange", function(){
+      if(!document.hidden) swUpdate();
+    });
+    var hadController=!!navigator.serviceWorker.controller, reloaded=false;
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      if(reloaded || !hadController) return;  /* first install: no reload */
+      reloaded=true; location.reload();
+    });
+  }
+})();
+</script>
+</body>
+</html>
